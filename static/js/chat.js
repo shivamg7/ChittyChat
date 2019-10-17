@@ -1,13 +1,13 @@
 const text_box = '<div class="card-panel right" style="width: 75%; position: relative">' +
     '<div style="position: absolute; top: 0; left:3px; font-weight: bolder" class="title">{sender}</div>' +
-    '{message}' +
+    '<div class="message">{message}</div>' +
     '</div>';
 
 let userState = ''
 
 const userDiv = (senderId, receiverId, name, online) =>
     (`<a href="/chat/${senderId}/${receiverId}" id="user${receiverId}" class="collection-item row">
-                    <img src="https://frontend-1.adjust.com/new-assets/images/site-images/interface/user.svg" class="col s2">
+                    <img src="https://ui-avatars.com/api/?name=${name}" class="col s2">
                     <div class="col s10">
                     <span class="title" style="font-weight: bolder">${name}</span>
                     <span style="color: ${online ? 'green' : 'red'}; float: right">${online ? 'online' : 'offline'}</span>

@@ -43,10 +43,74 @@
     </div>
     </div>
     {% load staticfiles %}
+    
+    <script src="https://cdn.rawgit.com/CryptoStore/crypto-js/3.1.2/build/rollups/tripledes.js"></script>
     <script>
+
+        var caesarShift = function(str, amount) {
+
+// Wrap the amount
+if (amount < 0)
+    return caesarShift(str, amount + 26);
+
+// Make an output variable
+var output = '';
+
+// Go through each character
+for (var i = 0; i < str.length; i ++) {
+
+    // Get the character we'll be appending
+    var c = str[i];
+
+    // If it's a letter...
+    if (c.match(/[a-z]/i)) {
+
+        // Get its code
+        var code = str.charCodeAt(i);
+
+        // Uppercase letters
+        if ((code >= 65) && (code <= 90))
+            c = String.fromCharCode(((code - 65 + amount) % 26) + 65);
+
+        // Lowercase letters
+        else if ((code >= 97) && (code <= 122))
+            c = String.fromCharCode(((code - 97 + amount) % 26) + 97);
+
+    }
+
+    // Append
+    output += c;
+
+}
+
+// All done!
+return output;
+
+};
+
+        function encryptDesCbcPkcs7Padding(message, key) {
+            var keyWords = CryptoJS.enc.Utf8.parse(key);
+            var ivWords = CryptoJS.lib.WordArray.create([0, 0]);
+            var encrypted = CryptoJS.DES.encrypt(message, keyWords, { iv: ivWords});
+        
+            return encrypted;//.toString(CryptoJS.enc.Utf8);
+        }
+
+        function decryptDesCbcPkcs7Padding(message, key) {
+            var keyWords = CryptoJS.enc.Utf8.parse(key);
+            var ivWords = CryptoJS.lib.WordArray.create([0, 0]);
+
+            var decrypted = CryptoJS.DES.decrypt({ciphertext: message}, keyWords, { iv: ivWords });
+
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        }
+
+
         // For receiving
         sender_id = "{{ receiver.id }}";
         receiver_id = "{{ request.user.id }}";
+
+        var secret = prompt("Please enter SHIFT");
 
         //For sending
         $(function () {
@@ -54,8 +118,12 @@
             $('#chat-box').on('submit', function (event) {
                 event.preventDefault();
                 var message = $('#id_message');
-                send('{{ request.user.username }}', '{{ receiver.username }}', message.val());
-                message.val('');
+                var base64Coded = window.btoa(message.val());
+                var encrypted = encryptDesCbcPkcs7Padding(base64Coded, String(secret));
+                var finalEncrypted = CryptoJS.enc.Base64.stringify(encrypted.ciphertext);
+                // message = caesarShift(String(message.val()), parseInt(secret));
+                send('{{ request.user.username }}', '{{ receiver.username }}', finalEncrypted);
+                // message = "";
             })
             setInterval(() => {
                 getUsers({{ request.user.id }}, doc => {
@@ -65,6 +133,17 @@
                     })
                     $('#users').html(list)
                 });
+                var msg_list = document.getElementsByClassName('message');
+                console.log("Reloading messages");
+                for(i = 0;i < msg_list.length; i++){
+                    var encryptedMsg = String(msg_list[i].innerHTML);
+                    var base64Decoded = CryptoJS.enc.Base64.parse(encryptedMsg);
+                    var decrypted = decryptDesCbcPkcs7Padding(base64Decoded, String(secret));
+                    var finalDecrypted = CryptoJS.enc.Base64.parse(decrypted.toString(CryptoJS.enc.Utf8)).toString(CryptoJS.enc.Utf8);
+
+                    msg_list[i].innerHTML = finalDecrypted;
+                    msg_list[i].classList.remove('message');
+                }
             }, 1000)
         })        
 
