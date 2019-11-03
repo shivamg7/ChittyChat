@@ -47,17 +47,22 @@ def user_list(request, pk=None):
             return JsonResponse({'error': "Something went wrong"}, status=400)
 
 
-@csrf_exempt
+
 def message_list(request, sender=None, receiver=None):
     """
     List all required messages, or create a new message.
     """
-    if request.method == 'GET':
+    if request.method == 'GET' and sender != None and receiver != None:
         messages = Message.objects.filter(sender_id=sender, receiver_id=receiver, is_read=False)
         serializer = MessageSerializer(messages, many=True, context={'request': request})
         for message in messages:
             message.is_read = True
             message.save()
+        return JsonResponse(serializer.data, safe=False)
+
+    elif request.method == 'GET':
+        messages = Message.objects.filter()
+        serializer = MessageSerializer(messages, many=True, context={'request': request})
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
