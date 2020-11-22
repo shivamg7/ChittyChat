@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 import datetime
 
-from django.core.cache import cache
+# from django.core.cache import cache
 
 
 
@@ -14,7 +14,8 @@ class UserProfile(models.Model):
         return self.user.username
     
     def last_seen(self):
-        return cache.get('last_seen_%s' % self.user.username)
+        return datetime.datetime.now()
+        # return cache.get('last_seen_%s' % self.user.username)
     
     def online(self):
         if self.last_seen():

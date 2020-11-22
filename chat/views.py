@@ -47,7 +47,7 @@ def user_list(request, pk=None):
             return JsonResponse({'error': "Something went wrong"}, status=400)
 
 
-
+@csrf_exempt
 def message_list(request, sender=None, receiver=None):
     """
     List all required messages, or create a new message.
